@@ -6,3 +6,4 @@ euler_REF_10y_i15;Euler ETHZ;CentOS Linux release 7.3.1611 (Core);intel/15.0.0;O
 euler_REF_10y_i17;Euler ETHZ;CentOS Linux release 7.3.1611 (Core);intel/17.0.0.098;O3;y;y;y;y;n;n;December 2017
 euler_REF_10y_i18;Euler ETHZ;CentOS Linux release 7.3.1611 (Core);intel/18.0.0;O3;y;y;y;y;n;n;December 2017
 aerosol_REF_10y;Aerosol ETHZ;Red Hat Enterprise Linux Server release 6.3 (Santiago);intel/14.0.0;O3;y;y;y;y;n;n;December 2017
+daint_REF_10y_May_2020;test;test;2;O1;y;y;n;y;n;y;Julky 2020
