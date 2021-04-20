@@ -62,7 +62,7 @@ def add_line_descr_f(exp,f_exp_descr):
                             'rmse (y/n)',
                             'emi (y/n)',
                             'Date of experiment (month yyyy)']
-        pd.DataFrame(columns=cols_exp_descr_f)
+        df_exp_descr = pd.DataFrame(columns=cols_exp_descr_f)
     else:
         df_exp_descr = pd.read_csv(f_exp_descr, sep=';')
 
