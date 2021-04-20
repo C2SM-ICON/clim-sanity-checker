@@ -1,0 +1,2 @@
+Experiment name;Platform;OS;Compiler (with version);Optimisation level (-OX);-fast-transcendentals (y/n);-no-prec-sqrt (y/n);-no-prec-div (y/n);welch (y/n);fldcor (y/n);rmse (y/n);emi (y/n);Date of experiment (month yyyy)
+testaermerge2int;Euler;-;Intel;-O3;n;n;n;y;y;y;n;April 2021
