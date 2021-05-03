@@ -2,6 +2,8 @@
 import argparse
 import os
 import glob
+import shutil
+import sys
 from scipy import stats
 
 # aliased standard modules
@@ -23,6 +25,8 @@ from lib.test_config import get_config_of_current_test
 
 '''
 Module providing functions to perform the test. It contains:
+
+    - generate_first_ref: create the first reference for test "welch" and "emi"
 
     - add_color_df_result: Add the color for the graph
             to the dataframe with the test results         
@@ -50,6 +54,38 @@ C.Siegenthaler 07.2020 (C2SM)
 J.Jucker 01.2021 (C2SM)
 
 '''
+
+def generate_first_ref(exp, test, test_cfg, p_ref_csv_files,p_stages):
+
+    target_ref_directory = os.path.join(p_ref_csv_files,test)
+    os.makedirs(target_ref_directory,exist_ok=True)
+
+    first_ref_data = os.path.join(p_stages,
+                                  'test_postproc_{}_{}.csv'.format(test,
+                                                                   exp))
+
+    first_ref_filename = '{}_{}.csv'.format(test_cfg.ref_name,exp)
+
+    place_for_first_reference = os.path.join(target_ref_directory,
+                                             first_ref_filename)
+
+    shutil.copy(first_ref_data,place_for_first_reference)
+
+    log.banner('')
+    log.banner('First reference created: {}'.format(first_ref_filename))
+    log.banner('')
+
+    log.info(Style.ORANGE('You have two possibilities now: \n'
+                          ' \n'
+                          '1: Restart clim-sanity-checker '
+                          'with another experiment \n'
+                          ' \n'
+                          '2: Commit and push the reference in {} ' 
+                          'to Git \n' 
+                          .format(utils.rel_path(place_for_first_reference))))
+
+    sys.exit(0)
+
 
 def add_color_df_result(df_result,metric_thresholds):
 
@@ -298,47 +334,61 @@ def main(new_exp,
     df_result = {}
 
     for test in tests:
-        log.info('Prepare references for test {}'.format(test))
 
         test_cfg = get_config_of_current_test(test)
 
-        results_data_processing[test]['exp'] = new_exp
+        if test == 'welch' or test == 'emi':
 
-        # list of paths to all csv files
-        p_csv_files[test] = glob.glob(
-            os.path.join(p_ref_csv_files,
-                         test,'{}_*csv'.format(test_cfg.ref_name)))
-        if len(p_csv_files[test]) == 0:
-            log.error('No reference files found in {}'.format(p_ref_csv_files))
+            log.info('Prepare references for test {}'.format(test))
 
-        log.debug('{} reference(s) found for test \
-                  {}'.format(len(p_csv_files[test]),test))
+            results_data_processing[test]['exp'] = new_exp
 
-        # create big dataframe containing all reference exps
-        df_ref[test] = create_big_df(test_cfg.ref_name,
-                                     list_csv_files=p_csv_files[test])
+            # list of paths to all csv files
+            p_csv_files[test] = glob.glob(
+                os.path.join(p_ref_csv_files,
+                             test,'{}_*csv'.format(test_cfg.ref_name)))
+            if len(p_csv_files[test]) == 0:
+                log.warning('No reference files '
+                            'found in {}'.format(p_ref_csv_files))
 
-        # Exclude all the non-desired variables (1) var from file, 2) exp)
-        full_p_f_vars = os.path.join(paths.p_f_vars_proc,test,
-                                     f_vars_to_extract)
-        vars_to_analyse = list(pd.read_csv(full_p_f_vars, sep=',')
-                               ['var'].values)
-        vars_to_analyse.append('exp')
-        try:
-            df_ref[test] = df_ref[test][vars_to_analyse]
-        except KeyError as e:
-            log.warning(e)
-            log.error('Variables defined in {} are not contained in reference \
-                {}'.format(utils.rel_path(f_vars_to_extract),
-                           utils.rel_path(p_ref_csv_files)))
+                generate_first_ref(new_exp, 
+                                   test, 
+                                   test_cfg, 
+                                   p_ref_csv_files, 
+                                   p_stages)
 
-        df_exp[test] = results_data_processing[test][vars_to_analyse]
+            log.debug('{} reference(s) found for test \
+                      {}'.format(len(p_csv_files[test]),test))
 
-        log.info('References for test {} prepared'.format(test))
+            # create big dataframe containing all reference exps
+            df_ref[test] = create_big_df(test_cfg.ref_name,
+                                         list_csv_files=p_csv_files[test])
 
-        testresult_csv[test] = os.path.join(p_stages,
-                                            'result_{}_{}.csv'.format(test,
-                                                                      new_exp))
+            # Exclude all the non-desired variables (1) var from file, 2) exp)
+            full_p_f_vars = os.path.join(paths.p_f_vars_proc,test,
+                                         f_vars_to_extract)
+            vars_to_analyse = list(pd.read_csv(full_p_f_vars, sep=',')
+                                   ['var'].values)
+            vars_to_analyse.append('exp')
+            try:
+                df_ref[test] = df_ref[test][vars_to_analyse]
+            except KeyError as e:
+                log.warning(e)
+                log.error('Variables defined in {} are \
+                          not contained in reference \
+                          {}'.format(utils.rel_path(f_vars_to_extract),
+                                     utils.rel_path(p_ref_csv_files)))
+
+            df_exp[test] = results_data_processing[test][vars_to_analyse]
+
+            log.info('References for test {} prepared'.format(test))
+
+            testresult_csv[test] = os.path.join(
+                p_stages,
+                'result_{}_{}.csv'.format(test,
+                                          new_exp))
+        else:
+            df_exp[test] = {}
 
         if test == 'welch':
             log.banner('')
